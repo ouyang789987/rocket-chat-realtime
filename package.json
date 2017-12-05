@@ -4,7 +4,8 @@
   "description": "Rocket.Chat realtime sdk.",
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha -r should -r should-sinon",
+    "test": "nyc mocha  -r babel-core/register -r should -r should-sinon",
+    "test:watch": "npm test -- --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "keywords": [
@@ -18,8 +19,12 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
     "coveralls": "^3.0.0",
     "mocha": "^4.0.1",
+    "mock-socket": "^7.1.0",
     "nyc": "^11.3.0",
     "should": "^13.1.3",
     "should-sinon": "0.0.6",

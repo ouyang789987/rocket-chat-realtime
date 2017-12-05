@@ -1,37 +1,20 @@
-import EventEmitter from 'wolfy87-eventemitter';
-import {createClass} from 'asteroid';
 import createDebug from 'debug';
+import Base from './base';
 
 const debug = createDebug('rocket-chat-realtime:client');
 const MESSAGE_SUBSCRIBE_TOPIC = 'stream-room-messages' // 'messages'
 const MESSAGE_COLLECTION = 'stream-room-messages'
 const methodExists = {}
 
-function pipeEvent(from, to, ...events) {
-  events.forEach(e => from.on(e, (...args) => to.emit(e, ...args)));
-}
-
-export default class RocketChatDriver extends EventEmitter {
+export default class Client extends Base {
+// export default class Client extends EventEmitter {
 	constructor(options) {
-    super();
-    const Asteroid = createClass();
-		this.asteroid = new Asteroid(options)
-
-    pipeEvent(this.asteroid, this, 'connected', 'reconnected')
-  }
-
-  connect() {
-    this.asteroid.connect();
+    super(options);
   }
 
 	login(username, password) {
 		debug("Logging In")
-		return this.asteroid.loginWithPassword(username, password)
-  }
-
-	callMethod(name, ...args) {
-		debug(`Calling: ${name}, ${args.join(', ')}`)
-		return this.asteroid.apply(name, args)
+		return super.loginWithPassword(username, password)
   }
 
   ensureMethodExists(method) {
@@ -40,7 +23,7 @@ export default class RocketChatDriver extends EventEmitter {
     if (exists === false) return Promise.reject(new Error(`Method: ${method} does not exist`));
 
     debug("Checking to see if method: #{method} exists")
-    return this.asteroid.call(method, "")
+    return super.call(method, "")
       .then((res) => void (methodExists[method] = true))
       .catch((err) => {
         if(err.error === 404) {
@@ -53,19 +36,19 @@ export default class RocketChatDriver extends EventEmitter {
   }
 
 	getRoomId(room) {
-		this.callMethod('getRoomIdByNameOrId', room)
+		super.call('getRoomIdByNameOrId', room)
   }
 
 	getRoomName(room) {
-		this.callMethod('getRoomNameById', room)
+		super.call('getRoomNameById', room)
   }
 
 	getDirectMessageRoomId(username) {
-		this.callMethod('createDirectMessage', username)
+		super.call('createDirectMessage', username)
   }
 
 	joinRoom(roomId, joinCode) {
-		return this.callMethod('joinRoom', roomId, joinCode)
+		return super.call('joinRoom', roomId, joinCode)
   }
 
 	prepareMessage(content, rid) {
@@ -87,13 +70,13 @@ export default class RocketChatDriver extends EventEmitter {
 
 	sendMessageByRoomId(content, roomId) {
 		message = this.prepareMessage(content, roomId)
-		return this.asteroid.call('sendMessage', message)
+		return super.call('sendMessage', message)
       .then(result => debug('[sendMessage] Success:', result))
 		  .catch(error => debug('[sendMessage] Error:', error))
   }
 
 	subscribeRoomMessages(roomId) {
 		debug("Preparing Meteor Subscriptions..")
-		return this.asteroid.subscribe(MESSAGE_SUBSCRIBE_TOPIC, roomId, true)
+		return super.subscribe(MESSAGE_SUBSCRIBE_TOPIC, roomId, true)
   }
 }
