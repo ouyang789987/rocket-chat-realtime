@@ -12,15 +12,10 @@ export default class Client extends Base {
     super(options);
   }
 
-	login(username, password) {
-		debug("Logging In")
-		return super.loginWithPassword(username, password)
-  }
-
   ensureMethodExists(method) {
-    const exits = methodExists[method];
+    const exists = methodExists[method];
     if (exists === true) return Promise.resolve();
-    if (exists === false) return Promise.reject(new Error(`Method: ${method} does not exist`));
+    if (exists === false) return Promise.reject(new Error(`Method: ${method} does not exists`));
 
     debug("Checking to see if method: #{method} exists")
     return super.call(method, "")
@@ -28,23 +23,39 @@ export default class Client extends Base {
       .catch((err) => {
         if(err.error === 404) {
           methodExists[method] = false
-          debug("Method: #{method} does not exist")
-          return Promise.reject(new Error(`Method: ${method} does not exist`))
+          debug("Method: #{method} does not exists")
+          return Promise.reject(new Error(`Method: ${method} does not exists`))
         }
         methodExists[method] = true
       })
   }
 
+  // methods
+
+	login(username, password) {
+		debug("Logging In")
+		return super.loginWithPassword(username, password)
+  }
+
+  listEmojiCustom() {
+    return super.call('listEmojiCustom');
+  }
+
+  loadHistory(roomId, ...rest) {
+    // todo room name
+    return super.call('loadHistory', roomId, ...rest)
+  }
+
 	getRoomId(room) {
-		super.call('getRoomIdByNameOrId', room)
+		return super.call('getRoomIdByNameOrId', room)
   }
 
 	getRoomName(room) {
-		super.call('getRoomNameById', room)
+		return super.call('getRoomNameById', room)
   }
 
 	getDirectMessageRoomId(username) {
-		super.call('createDirectMessage', username)
+		return super.call('createDirectMessage', username)
   }
 
 	joinRoom(roomId, joinCode) {
@@ -69,7 +80,7 @@ export default class Client extends Base {
   }
 
 	sendMessageByRoomId(content, roomId) {
-		message = this.prepareMessage(content, roomId)
+		const message = this.prepareMessage(content, roomId)
 		return super.call('sendMessage', message)
       .then(result => debug('[sendMessage] Success:', result))
 		  .catch(error => debug('[sendMessage] Error:', error))

@@ -2,8 +2,9 @@
   "name": "rocket-chat-realtime",
   "version": "0.0.0",
   "description": "Rocket.Chat realtime sdk.",
-  "main": "index.js",
+  "main": "lib/client.js",
   "scripts": {
+    "build": "babel -d lib src",
     "test": "nyc mocha  -r babel-core/register -r should -r should-sinon",
     "test:watch": "npm test -- --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
@@ -19,6 +20,7 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.1",
