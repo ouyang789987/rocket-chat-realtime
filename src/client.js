@@ -7,7 +7,6 @@ const MESSAGE_COLLECTION = 'stream-room-messages'
 const methodExists = {}
 
 export default class Client extends Base {
-// export default class Client extends EventEmitter {
 	constructor(options) {
     super(options);
   }
@@ -88,6 +87,32 @@ export default class Client extends Base {
 
 	subscribeRoomMessages(roomId) {
 		debug("Preparing Meteor Subscriptions..")
-		return super.subscribe(MESSAGE_SUBSCRIBE_TOPIC, roomId, true)
+    const sub = super.subscribe(MESSAGE_SUBSCRIBE_TOPIC, roomId, false)
+    this.ddp.on('changed', data => {
+      if (data.collection !== MESSAGE_SUBSCRIBE_TOPIC) return;
+      const {fields} = data;
+      if (roomId !== fields.eventName) return;
+      sub.emit('message', ...fields.args)
+    })
+    return sub;
+  }
+
+
+  // livechat methods
+
+	livechatLoginByToken(token) {
+		debug("Logging In")
+		return super.call('livechat:loginByToken', token)
+  }
+
+  livechatGetInitialData(token) {
+    return this.call('livechat:getInitialData', token)
+  }
+
+	sendMessageLivechat(content, roomId, token) {
+    debug(`Sending Livechat Message To Room: ${roomId}`)
+
+		const message = this.prepareMessage(content, roomId)
+		return super.call('sendMessageLivechat', {...message, token})
   }
 }

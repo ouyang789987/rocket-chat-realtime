@@ -12,4 +12,6 @@ npm install rocket-chat-realtime
 
 ## Usage
 
-### Simple
+### Example
+
+> See [example/live-chat](https://github.com/wmzy/rocket-chat-realtime/tree/master/example/live-chat)
