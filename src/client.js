@@ -31,9 +31,21 @@ export default class Client extends Base {
 
   // methods
 
-	login(username, password) {
-		debug("Logging In")
-		return super.loginWithPassword(username, password)
+  /**
+   * login with username and password simple
+   * @param {string} username
+   * @param {string} password
+   */
+	loginBasic(username, password) {
+		return this.loginWithPassword({username: password})
+  }
+
+  /**
+   * login resume a token
+   * @param {string} token An auth token
+   */
+	loginWithToken(token) {
+		return this.login({resume: token})
   }
 
   listEmojiCustom() {
@@ -100,9 +112,9 @@ export default class Client extends Base {
 
   // livechat methods
 
-	livechatLoginByToken(token) {
-		debug("Logging In")
-		return super.call('livechat:loginByToken', token)
+	livechatLoginByToken(visitorToken) {
+    return this.call('livechat:loginByToken', visitorToken)
+      .then(({token}) => this.loginWithToken(token))
   }
 
   livechatGetInitialData(token) {
