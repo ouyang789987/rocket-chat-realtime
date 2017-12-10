@@ -18,7 +18,7 @@ export default class LivechatClient extends Client {
 	loginByToken() {
     return this.call('livechat:loginByToken', this.visitorToken)
       .then((result) => {
-        if (_.isEmpty(result)) return;
+        if (_.isEmpty(result)) throw new Error('unregister');
         const {token} = result;
         this.loginWithToken(token)
       })
@@ -31,13 +31,35 @@ export default class LivechatClient extends Client {
       .then(({token}) => this.loginWithToken(token))
   }
 
+  loginOrRegister() {
+    return this.loginByToken()
+      .catch(() => this.registerGuest())
+  }
+
   getInitialData() {
     debug('get init data start');
     return this.call('livechat:getInitialData', this.visitorToken)
       .then((result) => {
         debug('get init data end', result);
         // ["enabled", "title", "color", "registrationForm", "room", "triggers", "departments", "allowSwitchingDepartments", "online", "offlineColor", "offlineMessage", "offlineSuccessMessage", "offlineUnavailableMessage", "displayOfflineForm", "videoCall", "offlineTitle", "language", "transcript", "transcriptMessage", "agentData"]
-        _.assign(this, _.pick(['room', 'title'], result));
+        Object.assign(this, _.pick(['room', 'title'], result));
+        if (!this.room) {
+          const sendMessage = this.sendMessage.bind(this);
+          this.sendMessage = (...args) => {
+            this.room = {_id: genToken()};
+            sendMessage(...args)
+              .then(result => {
+                delete this.sendMessage;
+                this.subscribeMessages();
+                this.loadHistory();
+                return result;
+              })
+              .catch(e => {
+                delete this.room;
+                throw e;
+              });
+          }
+        }
         this.roomInfo = result;
         this.roomInit = true;
         this.emit('roomInit');
@@ -54,7 +76,8 @@ export default class LivechatClient extends Client {
   }
 
   loadHistory() {
-    return super.loadHistory(this.roomId)
+    super.loadHistory(this.roomId)
+      .then(messages => this.on('history', messages));
   }
 
 	sendMessage(content) {
@@ -65,13 +88,12 @@ export default class LivechatClient extends Client {
 		return this.call('sendMessageLivechat', {...message, token: this.visitorToken})
   }
 
-  subscribeMessages(handleMessage) {
+  subscribeMessages() {
     const sub = super.subscribeRoomMessages(this.roomId)
-    if (handleMessage) sub.on('message', handleMessage);
-    return sub;
+    sub.on('message', (...args) => this.on('message', ...args));
   }
 }
 
 function genToken() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
